@@ -44,6 +44,98 @@
   
   const app = express();
   
-  app.use(bodyParser.json());
+  app.use(express.json())
+
+  const todos =[];
+  const idGenerator = ()=>{
+    const id = Math.floor(1000 * Math.random()) + 5000;
+    // id from 6000 to 5000
+    return id;
+  }
+
+  app.get('/todos',(req, res)=>{
+    res.status(200).json(todos);
+  })
   
+  app.get('/todos/:id',(req, res)=>{
+    const todoItemId = req.params.id;   
+    const todoItem = todos.find((e)=>{    
+      if(e.id == todoItemId){      
+        return true;
+      }else{
+        return false;
+      }
+    })
+    if(!todoItem){
+      return res.status(404).send("Not Found");
+    }
+    res.status(200).json(todoItem);
+  })
+
+  app.post('/todos',(req, res)=>{
+    const todoItem = req.body;
+    
+    let isIdUnique = false;
+    let todoItemId = idGenerator();
+    if(!todoItem){
+      res.status(400).json({message: "invalid payload"});
+    }
+    
+    while(!isIdUnique){
+      for(let i=0; i<todos.length; i++){
+        if(todoItemId === todos[i].id){
+          todoItemId = idGenerator();
+          i=0;
+        }
+      }
+      isIdUnique = true;
+    }
+    todoItem.id = todoItemId;
+    todos.push(todoItem);
+    res.status(201).json({
+      todoItemId
+    })
+
+  })
+
+  app.put('/todos/:id',(req, res)=>{
+    const todoItemId = req.params.id;
+    const update = req.body;   
+    let todoItemIndex = todos.findIndex((e)=>{    
+      if(e.id == todoItemId){      
+        return true;
+      }else{
+        return false;
+      }
+    })
+
+    if(todoItemIndex < 0){
+      return res.status(404).send("Not Found");
+    }
+    const todoItem = todos[todoItemIndex]
+    todos[todoItemIndex] = { ...todoItem, ...update}
+    res.status(200).json(todos[todoItemIndex]);
+  })
+
+  app.delete('/todos/:id',(req, res)=>{
+    const todoItemId = req.params.id;   
+    const todoItemIndex = todos.findIndex((e)=>{    
+      if(e.id == todoItemId){      
+        return true;
+      }else{
+        return false;
+      }
+    })
+    if(todoItemIndex < 0){
+      return res.status(404).send("Not Found");
+    }
+    todos.splice(todoItemIndex, 1);
+    res.status(200).json({ message: "Job done"});
+  })
+
+  app.listen(3000, ()=>{
+    console.log(`Server started at port : 3000`);
+    
+  })
+
   module.exports = app;
